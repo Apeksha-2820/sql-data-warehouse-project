@@ -1,0 +1,72 @@
+# Gold Layer - Data Dictionary
+
+The Gold layer provides business-ready data for analytics and reporting
+using a Star Schema design.
+
+## Gold Objects
+
+| Object | Type | Purpose |
+|---|---|---|
+| `gold.dim_customer` | Dimension | Customer attributes |
+| `gold.dim_products` | Dimension | Current product attributes |
+| `gold.fact_sales` | Fact | Sales transactions and measures |
+
+## `gold.dim_customer`
+
+| Column | Description |
+|---|---|
+| `customer_key` | Surrogate customer key |
+| `customer_id` | Source customer ID |
+| `customer_number` | Business customer key |
+| `first_name` | Customer first name |
+| `last_name` | Customer last name |
+| `country` | Customer country |
+| `marital_status` | Customer marital status |
+| `gender` | Standardized customer gender |
+| `birthdate` | Customer birth date |
+| `create_date` | Customer creation date |
+
+## `gold.dim_products`
+
+| Column | Description |
+|---|---|
+| `product_key` | Surrogate product key |
+| `product_id` | Source product ID |
+| `product_number` | Business product key |
+| `product_name` | Product name |
+| `category_id` | Product category ID |
+| `category` | Product category |
+| `subcategory` | Product subcategory |
+| `maintenance` | Maintenance classification |
+| `product_cost` | Product cost |
+| `product_line` | Product line |
+| `start_date` | Product start date |
+
+## `gold.fact_sales`
+
+| Column | Description |
+|---|---|
+| `order_number` | Sales order number |
+| `product_key` | Foreign key to `dim_products` |
+| `customer_key` | Foreign key to `dim_customer` |
+| `order_date` | Order date |
+| `shipping_date` | Shipping date |
+| `due_date` | Due date |
+| `sales_amount` | Sales amount |
+| `quantity` | Quantity sold |
+| `price` | Unit price |
+
+## Gold Relationships
+
+```text
+dim_customer
+     |
+customer_key
+     |
+     v
+fact_sales
+     ^
+     |
+product_key
+     |
+dim_products
