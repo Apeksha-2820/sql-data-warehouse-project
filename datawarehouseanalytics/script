@@ -1,0 +1,572 @@
+/*
+================================================================================
+Gold Layer - Analytics
+================================================================================
+
+Project     : SQL Data Warehouse - CRM & ERP Analytics
+Layer       : Gold
+Purpose     : Perform business-oriented analytical queries on the Gold layer.
+
+Gold Objects:
+    - gold.dim_customer
+    - gold.dim_products
+    - gold.fact_sales
+
+The Gold layer follows a Star Schema:
+    
+                 dim_customer
+                      |
+                      |
+                 fact_sales
+                      |
+                      |
+                 dim_products
+
+Author      : Apeksha Sarode
+================================================================================
+*/
+
+
+/*
+================================================================================
+SECTION 1: DATABASE CONTEXT
+================================================================================
+*/
+
+USE DataWarehouse;
+GO
+
+PRINT '==============================================================';
+PRINT 'Starting Gold Layer Analytics';
+PRINT '==============================================================';
+PRINT 'Database: DataWarehouse';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 2: DIMENSION EXPLORATION
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Task 1: Explore all countries our customers come from
+-- =============================================================================
+
+PRINT 'Task 1: Exploring customer countries...';
+
+SELECT DISTINCT
+    country
+FROM gold.dim_customer
+ORDER BY country;
+
+PRINT 'Task 1 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 2: Explore all product categories and subcategories
+-- =============================================================================
+
+PRINT 'Task 2: Exploring product categories and subcategories...';
+
+SELECT DISTINCT
+    category,
+    subcategory,
+    product_name
+FROM gold.dim_products
+ORDER BY
+    category,
+    subcategory,
+    product_name;
+
+PRINT 'Task 2 completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 3: DATE EXPLORATION
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Task 3 & 4: Find the first and last order dates
+--             and determine the number of years of sales available
+-- =============================================================================
+
+PRINT 'Task 3 & 4: Exploring sales date range...';
+
+SELECT
+    MIN(order_date) AS first_order_date,
+    MAX(order_date) AS last_order_date,
+    DATEDIFF(
+        YEAR,
+        MIN(order_date),
+        MAX(order_date)
+    ) AS business_years
+FROM gold.fact_sales;
+
+PRINT 'Task 3 & 4 completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 4: CUSTOMER EXPLORATION
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Task 5: Find the youngest and oldest customer
+-- =============================================================================
+
+PRINT 'Task 5: Exploring customer age range...';
+
+SELECT
+    MIN(birthdate) AS oldest_customer_birthdate,
+    MAX(birthdate) AS youngest_customer_birthdate
+FROM gold.dim_customer;
+
+PRINT 'Task 5 completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 5: MEASURES EXPLORATION
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Task 6: Find total sales
+-- =============================================================================
+
+PRINT 'Task 6: Calculating total sales...';
+
+SELECT
+    SUM(sales_amount) AS total_sales
+FROM gold.fact_sales;
+
+PRINT 'Task 6 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 7: Find total number of items sold
+-- =============================================================================
+
+PRINT 'Task 7: Calculating total quantity sold...';
+
+SELECT
+    SUM(quantity) AS total_items_sold
+FROM gold.fact_sales;
+
+PRINT 'Task 7 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 8: Find the average selling price
+-- =============================================================================
+
+PRINT 'Task 8: Calculating average selling price...';
+
+SELECT
+    AVG(price) AS average_selling_price
+FROM gold.fact_sales;
+
+PRINT 'Task 8 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 9: Find total number of orders
+-- =============================================================================
+
+PRINT 'Task 9: Calculating total number of orders...';
+
+SELECT
+    COUNT(DISTINCT order_number) AS total_no_of_orders
+FROM gold.fact_sales;
+
+PRINT 'Task 9 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 10: Find total number of products
+-- =============================================================================
+
+PRINT 'Task 10: Calculating total number of products...';
+
+SELECT
+    COUNT(*) AS total_no_of_products
+FROM gold.dim_products;
+
+PRINT 'Task 10 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 11: Find total number of customers
+-- =============================================================================
+
+PRINT 'Task 11: Calculating total number of customers...';
+
+SELECT
+    COUNT(*) AS total_no_of_customers
+FROM gold.dim_customer;
+
+PRINT 'Task 11 completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Task 12: Find total number of customers who have placed an order
+-- =============================================================================
+
+PRINT 'Task 12: Calculating customers who placed orders...';
+
+SELECT
+    COUNT(DISTINCT customer_key) AS total_customers_placed_orders
+FROM gold.fact_sales;
+
+PRINT 'Task 12 completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 6: CONSOLIDATED MEASURES REPORT
+================================================================================
+
+Purpose:
+    Generate a single report containing the major measurable quantities
+    available in the Gold layer.
+================================================================================
+*/
+
+PRINT 'Generating consolidated measures report...';
+
+SELECT
+    'Total Sales' AS measure_name,
+    SUM(sales_amount) AS measure_quantity
+FROM gold.fact_sales
+
+UNION ALL
+
+SELECT
+    'Total Quantity',
+    SUM(quantity)
+FROM gold.fact_sales
+
+UNION ALL
+
+SELECT
+    'Average Price',
+    AVG(price)
+FROM gold.fact_sales
+
+UNION ALL
+
+SELECT
+    'Total Number of Orders',
+    COUNT(DISTINCT order_number)
+FROM gold.fact_sales
+
+UNION ALL
+
+SELECT
+    'Total Number of Products',
+    COUNT(*)
+FROM gold.dim_products
+
+UNION ALL
+
+SELECT
+    'Total Number of Customers',
+    COUNT(*)
+FROM gold.dim_customer
+
+UNION ALL
+
+SELECT
+    'Total Customers Who Placed Orders',
+    COUNT(DISTINCT customer_key)
+FROM gold.fact_sales;
+
+PRINT 'Consolidated measures report completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 7: MAGNITUDE ANALYSIS
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Task 13: Find total customers by country
+-- =============================================================================
+
+PRINT 'Analyzing customers by country...';
+
+SELECT
+    country,
+    COUNT(customer_id) AS total_customers
+FROM gold.dim_customer
+GROUP BY country
+ORDER BY total_customers DESC;
+
+PRINT 'Customer-by-country analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find total customers by gender
+-- =============================================================================
+
+PRINT 'Analyzing customers by gender...';
+
+SELECT
+    gender,
+    COUNT(customer_id) AS total_customers
+FROM gold.dim_customer
+GROUP BY gender
+ORDER BY total_customers DESC;
+
+PRINT 'Customer-by-gender analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find total products by category
+-- =============================================================================
+
+PRINT 'Analyzing products by category...';
+
+SELECT
+    category,
+    COUNT(product_number) AS total_products
+FROM gold.dim_products
+GROUP BY category
+ORDER BY total_products DESC;
+
+PRINT 'Product-by-category analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find the average product cost in each category
+-- =============================================================================
+
+PRINT 'Analyzing average product cost by category...';
+
+SELECT
+    category,
+    AVG(product_cost) AS average_product_cost
+FROM gold.dim_products
+GROUP BY category
+ORDER BY average_product_cost DESC;
+
+PRINT 'Average product cost analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find total revenue generated for each category
+-- =============================================================================
+
+PRINT 'Analyzing revenue by product category...';
+
+SELECT
+    p.category,
+    SUM(f.sales_amount) AS total_revenue
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_products AS p
+    ON f.product_key = p.product_key
+GROUP BY
+    p.category
+ORDER BY
+    total_revenue DESC;
+
+PRINT 'Revenue-by-category analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find total revenue generated by each customer
+-- =============================================================================
+
+PRINT 'Analyzing revenue by customer...';
+
+SELECT
+    c.customer_key,
+    c.first_name,
+    c.last_name,
+    SUM(f.sales_amount) AS total_revenue
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_customer AS c
+    ON f.customer_key = c.customer_key
+GROUP BY
+    c.customer_key,
+    c.first_name,
+    c.last_name
+ORDER BY
+    total_revenue DESC;
+
+PRINT 'Revenue-by-customer analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find the distribution of sold items across countries
+-- =============================================================================
+
+PRINT 'Analyzing sold items by country...';
+
+SELECT
+    c.country,
+    SUM(f.quantity) AS total_sold_items
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_customer AS c
+    ON f.customer_key = c.customer_key
+GROUP BY
+    c.country
+ORDER BY
+    total_sold_items DESC;
+
+PRINT 'Sold-items-by-country analysis completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 8: RANKING ANALYSIS
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Find the 5 products generating the highest revenue
+-- =============================================================================
+
+PRINT 'Finding top 5 products by revenue...';
+
+SELECT TOP 5
+    f.product_key,
+    p.product_name,
+    SUM(f.sales_amount) AS total_revenue
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_products AS p
+    ON f.product_key = p.product_key
+GROUP BY
+    f.product_key,
+    p.product_name
+ORDER BY
+    total_revenue DESC;
+
+PRINT 'Top 5 product analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Find the 5 worst-performing products
+-- =============================================================================
+
+PRINT 'Finding bottom 5 products by revenue...';
+
+SELECT TOP 5
+    f.product_key,
+    p.product_name,
+    SUM(f.sales_amount) AS total_revenue
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_products AS p
+    ON f.product_key = p.product_key
+GROUP BY
+    f.product_key,
+    p.product_name
+ORDER BY
+    total_revenue ASC;
+
+PRINT 'Bottom 5 product analysis completed.';
+PRINT '';
+
+
+/*
+================================================================================
+SECTION 9: ADDITIONAL BUSINESS ANALYSIS
+================================================================================
+*/
+
+
+-- =============================================================================
+-- Revenue by year
+-- =============================================================================
+
+PRINT 'Analyzing yearly revenue...';
+
+SELECT
+    YEAR(order_date) AS sales_year,
+    SUM(sales_amount) AS total_revenue
+FROM gold.fact_sales
+GROUP BY
+    YEAR(order_date)
+ORDER BY
+    sales_year;
+
+PRINT 'Yearly revenue analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Revenue by product line
+-- =============================================================================
+
+PRINT 'Analyzing revenue by product line...';
+
+SELECT
+    p.product_line,
+    SUM(f.sales_amount) AS total_revenue
+FROM gold.fact_sales AS f
+LEFT JOIN gold.dim_products AS p
+    ON f.product_key = p.product_key
+GROUP BY
+    p.product_line
+ORDER BY
+    total_revenue DESC;
+
+PRINT 'Product-line revenue analysis completed.';
+PRINT '';
+
+
+-- =============================================================================
+-- Average order value
+-- =============================================================================
+
+PRINT 'Calculating average order value...';
+
+SELECT
+    SUM(sales_amount) / NULLIF(COUNT(DISTINCT order_number), 0)
+        AS average_order_value
+FROM gold.fact_sales;
+
+PRINT 'Average order value calculation completed.';
+PRINT '';
+
+
+/*
+================================================================================
+ANALYTICS COMPLETE
+================================================================================
+*/
+
+PRINT '==============================================================';
+PRINT 'Gold Layer Analytics Completed Successfully';
+PRINT '==============================================================';
